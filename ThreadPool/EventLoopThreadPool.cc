@@ -1,7 +1,9 @@
 #include "EventLoopThreadPool.h"
 #include "EventLoopThread.h"
-
+#include "MemoryPool.h"
 #include <memory>
+
+using namespace MPool;
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, const std::string &nameArg)
     : baseLoop_(baseLoop)

@@ -1,5 +1,8 @@
 #include <assert.h>
 #include "AsyncLogging.h"
+#include "MemoryPool.h"
+
+using namespace MPool;
 
 AsyncLogging::AsyncLogging(const std::string basename, 
                             int flushInterval) 
@@ -9,8 +12,8 @@ AsyncLogging::AsyncLogging(const std::string basename,
                             , thread_(std::bind(&AsyncLogging::threadFunc, this), "Logging")
                             , mutex_()
                             , cond_()
-                            , currentBuffer_(new Buffer())
-                            , nextBuffer_(new Buffer())
+                            , currentBuffer_(newElement<Buffer>())
+                            , nextBuffer_(newElement<Buffer>())
                             , buffers_()
                             , latch_(1) {
     currentBuffer_->bzero();
@@ -29,7 +32,7 @@ void AsyncLogging::append(const char* logline, int len) {
             currentBuffer_ = std::move(nextBuffer_);
         }
         else {
-            currentBuffer_.reset(new Buffer()); //使用的是shared_ptr的reset函数，指向新的new Buffer，这种情况很少发生
+            currentBuffer_.reset(newElement<Buffer>()); //使用的是shared_ptr的reset函数，指向新的new Buffer，这种情况很少发生
         }
         currentBuffer_->append(logline, len);
         cond_.notify_one();
@@ -53,8 +56,8 @@ void AsyncLogging::threadFunc() {
 
     latch_.countDown();
     LogFile output(basename_);
-    BufferPtr newBuffer1(new Buffer);
-    BufferPtr newBuffer2(new Buffer);
+    BufferPtr newBuffer1(newElement<Buffer>());
+    BufferPtr newBuffer2(newElement<Buffer>());
     newBuffer1->bzero();
     newBuffer2->bzero();
     BufferVector buffersToWrite;    //该vector属于后端线程，用于和前端buffers进行交换

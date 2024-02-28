@@ -2,9 +2,10 @@
 #include <mutex>
 #include "EventLoop.h"
 #include "Poller.h"
-#include "Log.h"
 #include "Channel.h"
+#include "MemoryPool.h"
 
+using namespace MPool;
 
 __thread EventLoop* t_loopInThisThread = nullptr; //线程中对应的EventLoop
 
@@ -18,7 +19,7 @@ int createEventFd() {
     return evtfd;
 }
 
-EventLoop::EventLoop() : threadId_(CurrentThread::tid()), poller_(Poller::newDefaultPoller(this)), looping_(false), quit_(false), callingPendingFunctors_(false), wakeupFd_(createEventFd()), wakeupChannel_(new Channel(this, wakeupFd_)) {
+EventLoop::EventLoop() : threadId_(CurrentThread::tid()), poller_(Poller::newDefaultPoller(this)), looping_(false), quit_(false), callingPendingFunctors_(false), wakeupFd_(createEventFd()), wakeupChannel_(newElement<Channel>(this, wakeupFd_)) {
     LOG_INFO("%s--%s--%d : EventLoop created %p in thread %d\n", __FILE__, __FUNCTION__, __LINE__, this, threadId_);
     if (t_loopInThisThread) {
         LOG_FATAL("%s--%s--%d--%d : Another EventLoop %p exists in this thread %d\n", __FILE__, __FUNCTION__, __LINE__, errno, this, threadId_);

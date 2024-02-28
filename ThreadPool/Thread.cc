@@ -1,7 +1,7 @@
 #include <semaphore.h>
 
 #include "Thread.h"
-
+#include "MemoryPool.h"
 std::atomic_int Thread::numCreated_(0);
 
 __thread int CurrentThread::t_cachedTid = 0;
@@ -29,7 +29,7 @@ void Thread::start() {
     sem_init(&sem, false, 0);
 
     // 开启线程
-    thread_ = std::shared_ptr<std::thread>(new std::thread([&](){
+    thread_ = std::shared_ptr<std::thread>( MPool::newElement<std::thread>([&](){
         // 获取线程的tid值
         tid_ = CurrentThread::tid();
         sem_post(&sem);
