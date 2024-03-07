@@ -117,7 +117,6 @@ void MPool::freeMemory(size_t size, void* p) {
         operator delete(p);
         return;
     }
-
     getMemoryPool(((size + 7) >> 3) - 1).deAllocate(reinterpret_cast<Slot*>(p));
 }
 

@@ -24,7 +24,7 @@ void test01() {
     printf("sizeof(Person) = %d\n", sizeof(Person));
 }
 
-int main() {
-    test01();
-    return 0;
-}
+// int main() {
+//     test01();
+//     return 0;
+// }

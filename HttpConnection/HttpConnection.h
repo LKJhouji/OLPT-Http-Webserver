@@ -1,20 +1,28 @@
 #pragma once
-
+#include <iostream>
 #include <memory>
 #include <unordered_map>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <string.h>
+#include <stdarg.h>
+#include <fcntl.h>  
+#include <mysql/mysql.h>
+#include "Timer.h"
+#include "LFUCache.h"
 #include "noncopyable.h"
 #include "Socket.h"
 #include "EventLoop.h"
 #include "Buffer.h"
 #include "Channel.h"
+#include "SqlConnectionPool.h"
+
 
 //#define ll long long
-
+using namespace Lfu;
 using std::string;
-using std::unique_ptr;
 using std::shared_ptr;
+using std::vector;
 //study from qinguoyi's TinyWebserver
 class HttpConnection : noncopyable, public std::enable_shared_from_this<HttpConnection> {
 public:
@@ -28,13 +36,13 @@ public:
     ~HttpConnection();
     
     void init();
-    void closeConn();
-    void process();
-    bool read();
-    bool write();
-    //void initSqlResult(SqlConnectionPool& scp); should be put into 'HttpWebserver' main class
+    void closeConn();   //handleClose
+    void process();     
+    bool read();    //handleRead
+    bool write(int iovcnt); //handleWrite
+    void linkTimer(shared_ptr<Timer> timer) { timer_ = timer; }
 private:
-enum METHOD { //http请求方法 
+    enum METHOD { //http请求方法 
         GET = 0,
         POST,
         HEAD,
@@ -66,13 +74,23 @@ enum METHOD { //http请求方法
         LINE_BAD,
         LINE_OPEN
     };
-    void handleRead();
-    void handleWrite();
-    void handleError();
-    void handleUpdate();
     void unmap();
     HTTP_CODE processRead();
     bool processWrite(HTTP_CODE ret);
+    HTTP_CODE parseRequestLine(char *text);
+    HTTP_CODE parseHeaders(char *text);
+    HTTP_CODE parseContent(char *text);
+    HTTP_CODE doRequest();
+    char* getLine() { return startLine_; };
+    LINE_STATUS parseLine();
+    bool addResponse(const char *format, ...);
+    bool addContent(const char *content);
+    bool addStatusLine(int status, const char *title);
+    bool addHeaders(int contentLength);
+    bool addContentType();
+    bool addContentLength(int contentLength);
+    bool addLinger();
+    bool addBlankLine();
     static const int fileNameLen_ = 200;
     static const int readBufferSize_ = 2048;
     static const int writeBufferSize_ = 1024;
@@ -86,18 +104,28 @@ enum METHOD { //http请求方法
     string username_;
     string password_;
     string databaseName_;
-    unique_ptr<MYSQL> mysql_;
-    
+    shared_ptr<MYSQL> mysql_;
+    shared_ptr<SqlConnectionPool> sqlPool_;
+    shared_ptr<LFUCache> cache_;
+    shared_ptr<Timer> timer_;
     char* docRoot_;     //资源根目录
     Buffer inputBuffer_;  // 接收数据的缓冲区
     Buffer outputBuffer_; // 发送数据的缓冲区
-    long checkedIdx_;
-    int startLine_;
+    char* startLine_;
     CHECK_STATE checkState_;
     METHOD method_;
-    char realFile[fileNameLen_];
+    string realFile_;
     int bytesToSend_;
     int bytesHaveSend_;
     struct stat fileStat_;  //refer to disk file
-    char* fileAddress_;
+    string fileAddress_;
+    struct iovec writeVec_[2];
+    int writeIovcnt_;
+    bool linger_;
+    char* url_;
+    char* version_;
+    long ContentLength_;
+    char* host_;
+    char* string_;  //存储请求头数据
+    int cgi_;    //是否启用的post
 };

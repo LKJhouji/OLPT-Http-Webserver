@@ -1,5 +1,4 @@
 #include "Socket.h"
-#include "Log.h"
 
 Socket::~Socket() {
     ::close(sockfd_);
@@ -7,13 +6,13 @@ Socket::~Socket() {
 
 void Socket::listen() {
     if(::listen(sockfd_, 1024) == -1) {
-        LOG_FATAL("%s--%s--%d--%d : listen error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
 }
 
 void Socket::bind(const InetAddress& localAddr) {
     if (::bind(sockfd_, (sockaddr*)localAddr.getSockAddr(), sizeof(sockaddr)) != 0) {
-        LOG_FATAL("%s--%s--%d--%d : bind error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
 }
 

@@ -1,5 +1,4 @@
 #include "EpollPoller.h"
-#include "Log.h"
 
 //实现channel与epoll_event一一映射
 
@@ -11,7 +10,7 @@ enum status {
 
 EpollPoller::EpollPoller(EventLoop* loop) : Poller(loop), epollfd_(::epoll_create1(EPOLL_CLOEXEC)), events_(kInitEventListSize) {
     if (epollfd_ < 0) {
-        LOG_FATAL("%s--%s--%d--%d : epoll_create error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
 }
 
@@ -36,14 +35,14 @@ Timestamp EpollPoller::poll(int timeoutMs, ChannelList* activeChannels) {   //�
     if (numEvent < 0) {
         if (saveErrno != EINTR) { //中断
             errno = saveErrno;
-            LOG_FATAL("%s--%s--%d--%d : epoll_wait error in thread %d\n", __FILE__, __FUNCTION__, __LINE__, errno, loop_->threadId());
+            //LOG
         }
     }
     else if (numEvent == 0) {
-        LOG_INFO("%s--%s--%d : no events happend in thread %d\n", __FILE__, __FUNCTION__, __LINE__, loop_->threadId());
+        //LOG
     }
     else {
-        LOG_INFO("%s--%s--%d : epoll_wait %d events happened in thread %d\n", __FILE__, __FUNCTION__, __LINE__, numEvent, loop_->threadId());
+        //LOG
         fillActiveChannels(numEvent, activeChannels);
         if (numEvent >= events_.size()) {
             events_.resize(numEvent * 2);
@@ -92,10 +91,10 @@ void EpollPoller::update(int operation, Channel* channel) { //epoll_ctl，对指
     event.data.ptr = channel;
     if (::epoll_ctl(epollfd_, operation, channel->fd(), &event) == -1) {
         if (operation == EPOLL_CTL_DEL) {
-            LOG_ERROR("%s--%s--%d--%d : epoll_ctl error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+            //LOG
         }
         else {
-            LOG_FATAL("%s--%s--%d--%d : epoll_ctl error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+            //LOG
         }
     }
 }

@@ -1,7 +1,7 @@
 #include "SqlConnectionPool.h"
 
-unique_ptr<MYSQL> SqlConnectionPool::getConnection() {
-    unique_ptr<MYSQL> conn = nullptr;
+shared_ptr<MYSQL> SqlConnectionPool::getConnection() {
+    shared_ptr<MYSQL> conn = nullptr;
     if (0 == connList_.size()) return nullptr;
     sem_.wait();
     {
@@ -14,7 +14,7 @@ unique_ptr<MYSQL> SqlConnectionPool::getConnection() {
     return conn;
 }
 
-bool SqlConnectionPool::releaseConnection(unique_ptr<MYSQL> conn) {
+bool SqlConnectionPool::releaseConnection(shared_ptr<MYSQL> conn) {
     if (nullptr == conn) return false;
     {
         std::unique_lock<std::mutex> lk(mutex_);
@@ -29,7 +29,7 @@ void SqlConnectionPool::destroySqlConnectionPool() {
     {
         std::unique_lock<std::mutex> lk(mutex_);
         if (connList_.size() > 0) {
-            std::list<unique_ptr<MYSQL>>::iterator it;
+            std::list<shared_ptr<MYSQL>>::iterator it;
             for (it = connList_.begin(); it != connList_.end(); it++) {
                 MYSQL* conn = it->get();
                 mysql_close(conn);
@@ -66,18 +66,33 @@ void SqlConnectionPool::init(InetAddress localAddr, string username, string pass
             //TODO:LOG
             exit(-1);
         }
-        unique_ptr<MYSQL> p(std::move(conn));
+        shared_ptr<MYSQL> p(conn);
         connList_.push_back(p);
         FreeConn_++;
     }
-    sem sem_ = sem(FreeConn_);
+    Sem sem_ = Sem(FreeConn_);
 }
 
-SqlConnectionPool::SqlConnectionPool() {
-    CurConn_ = 0;
-    FreeConn_ = 0;
+SqlConnectionPool::SqlConnectionPool() : CurConn_(0), FreeConn_(0), isInited_(false) {
 }
 
 SqlConnectionPool::~SqlConnectionPool() {
     destroySqlConnectionPool();
+}
+
+void SqlConnectionPool::initSqlResult() {
+    if (!isInited_) {
+        shared_ptr<MYSQL> conn = getConnection();
+        MYSQL* mysql = conn.get();
+        if (mysql_query(mysql, "SELECT username, password FROM user") != 0) {
+            //TODO:LOG
+        }
+        MYSQL_RES* result = mysql_store_result(mysql);
+
+        while (MYSQL_ROW row = mysql_fetch_row(result)) {
+            users_[row[0]] = row[1];
+        }
+        isInited_ = true;
+    }
+    
 }

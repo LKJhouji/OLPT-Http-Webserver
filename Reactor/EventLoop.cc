@@ -14,15 +14,15 @@ const int kPollTimeMs = 30000; //poller的等待时间
 int createEventFd() {
     int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (evtfd < 0) {
-        LOG_FATAL("%s--%s--%d--%d : eventfd error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
     return evtfd;
 }
 
 EventLoop::EventLoop() : threadId_(CurrentThread::tid()), poller_(Poller::newDefaultPoller(this)), looping_(false), quit_(false), callingPendingFunctors_(false), wakeupFd_(createEventFd()), wakeupChannel_(newElement<Channel>(this, wakeupFd_)) {
-    LOG_INFO("%s--%s--%d : EventLoop created %p in thread %d\n", __FILE__, __FUNCTION__, __LINE__, this, threadId_);
+    //LOG
     if (t_loopInThisThread) {
-        LOG_FATAL("%s--%s--%d--%d : Another EventLoop %p exists in this thread %d\n", __FILE__, __FUNCTION__, __LINE__, errno, this, threadId_);
+        //LOG
     }
     else t_loopInThisThread = this;
     wakeupChannel_->setReadCallback(std::bind(&EventLoop::handleRead, this));
@@ -39,16 +39,16 @@ EventLoop::~EventLoop() {
 void EventLoop::loop() {
     looping_ = true;
     quit_ = false;
-    LOG_INFO("%s--%s--%d : EventLoop %p start looping\n", __FILE__, __FUNCTION__, __LINE__, this);
+    //LOG
     while (!quit_) {
         activeChannels_.clear();
         pollReturnTime_ = poller_->poll(kPollTimeMs, &activeChannels_);
         for (Channel* channel : activeChannels_) {
-            channel->handleEvent(pollReturnTime_);
+            channel->handleEvent();
         }
         doPendingFunctors();
     }
-    LOG_INFO("%s--%s--%d : EventLoop %p stop looping\n", __FILE__, __FUNCTION__, __LINE__, this);
+    //LOG
     looping_ = false;
 }
 
@@ -91,7 +91,7 @@ void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = ::write(wakeupFd_, &one, sizeof one);
     if (n != sizeof one) {
-        LOG_ERROR("%s--%s--%d--%d : write error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
 }
 
@@ -103,7 +103,7 @@ void EventLoop::handleRead() {
     uint64_t one = 1;
     ssize_t n = ::read(wakeupFd_, &one, sizeof one);
     if (n != sizeof one) {
-        LOG_ERROR("%s--%s--%d--%d : read error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
 }
 void EventLoop::doPendingFunctors() {
@@ -121,10 +121,10 @@ void EventLoop::doPendingFunctors() {
     }
     
     if (functors.empty()) {
-        LOG_INFO("%s--%s--%d : no PendingFunctors in thread %d\n", __FILE__, __FUNCTION__, __LINE__, CurrentThread::tid());
+        //LOG
         return;
     }
     callingPendingFunctors_ = false;
 
-    LOG_INFO("%s--%s--%d : doPendingFunctors succeed in thread %d\n", __FILE__, __FUNCTION__, __LINE__, CurrentThread::tid());
+    //LOG
 }

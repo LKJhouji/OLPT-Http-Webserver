@@ -17,13 +17,13 @@ size_t convert(char buf[], T value) {
     if (value < 0) {
         *p++ = '-';
     }
-    p = '\0';
+    *p = '\0';
     std::reverse(buf, p);
     return p - buf;
 }
 
 template<typename T> 
-void LogStream::formatInteger(T) {
+void LogStream::formatInteger(T v) {
     if (buffer_.avail() >= kMaxNumericSize) {
         size_t len = convert(buffer_.current(), v);
         buffer_.add(len);
@@ -71,7 +71,7 @@ LogStream& LogStream::operator<<(double v) {
 }
 LogStream& LogStream::operator<<(long double v) {
     if (buffer_.avail() >= kMaxNumericSize) {
-        int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12g", v);
+        int len = snprintf(buffer_.current(), kMaxNumericSize, "%.12Lg", v);
         buffer_.add(len);
     }
     return *this;

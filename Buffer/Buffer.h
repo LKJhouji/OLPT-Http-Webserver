@@ -2,6 +2,10 @@
 
 #include <iostream>
 #include <vector>
+#include <sys/stat.h>
+#include <stdarg.h>
+
+using std::string;
 
 class Buffer {
 public:
@@ -26,7 +30,7 @@ public:
         return retrieveAsString(readableBytes());
     }
     std::string retrieveAsString(size_t len) {
-        std::string result(&*buffer_.begin() + readerIndex_, len);
+        std::string result(begin() + readerIndex_, len);
         retrieve(len);
         return result;
     }
@@ -37,11 +41,17 @@ public:
     }
     void append(const char* data, size_t len) {
         ensureWritableBytes(len);
-        std::copy(data, data + len, &*buffer_.begin() + writerIndex_);
+        std::copy(data, data + len, begin() + writerIndex_);
         writerIndex_ += len;
     }
+    bool vappend(size_t maxLen, const char* format, ...);
     ssize_t readFd(int fd, int* savedErrno);
-    ssize_t writeFd(int fd, int* savedErrno);
+    ssize_t writeFd(int fd, int* savedErrno, struct iovec* vec, int iovcnt, string fileAddress, int bytesHaveSend, int bytesToSend);
+    char* peek() { return begin() + readerIndex_; }
+    const char* peek() const { return begin() + readerIndex_; }
+    char* beginWrite() { return begin() + writerIndex_; }
+    const char* beginWrite() const { return begin() + writerIndex_; }
+    const char* cheapPrepend() const { return begin() + kCheapPrepend; }
 private:
     void makeSpace(size_t len) {
         if (writableBytes() + prependableBytes() < len + kCheapPrepend) {   //可写空间 + 预留空间 < 要写空间 + 初始化的预留空间
@@ -53,6 +63,9 @@ private:
             writerIndex_ = readerIndex_ + readableBytes();
         }
     }
+    char* begin() { return &*buffer_.begin(); }
+
+    const char* begin() const { return &*buffer_.begin(); }
     std::vector<char> buffer_;
     size_t readerIndex_;
     size_t writerIndex_;

@@ -48,21 +48,20 @@ void AsyncLogging::start() {
 void AsyncLogging::stop() {
     running_ = false;
     cond_.notify_one();
-    thread_.join();
+    thread_.join(); 
 }
 
 void AsyncLogging::threadFunc() {
     assert(running_ == true);
 
     latch_.countDown();
-    LogFile output(basename_);
+    LogFile output(basename_, "../LogOutput/LogFile.txt");
     BufferPtr newBuffer1(newElement<Buffer>());
     BufferPtr newBuffer2(newElement<Buffer>());
     newBuffer1->bzero();
     newBuffer2->bzero();
     BufferVector buffersToWrite;    //该vector属于后端线程，用于和前端buffers进行交换
     buffersToWrite.reserve(16);
-
     while (running_) {
         assert(newBuffer1 && newBuffer1->length() == 0);
         assert(newBuffer2 && newBuffer2->length() == 0);

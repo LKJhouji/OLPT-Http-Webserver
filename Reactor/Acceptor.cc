@@ -1,5 +1,4 @@
 #include "Acceptor.h"
-#include "Log.h"
 #include "InetAddress.h"
 
 #include <sys/types.h>    
@@ -11,7 +10,7 @@
 static int createNonblocking() {
     int sockfd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (sockfd < 0) {
-        LOG_FATAL("%s--%s--%d--%d : socket error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
     }
     return sockfd;
 }
@@ -57,10 +56,10 @@ void Acceptor::handleRead() {
     }
     else
     {
-        LOG_ERROR("%s--%s--%d--%d : accept error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+        //LOG
         if (errno == EMFILE)
         {
-            LOG_ERROR("%s--%s--%d--%d : sockfd reached limit error\n", __FILE__, __FUNCTION__, __LINE__, errno);
+            //LOG
         }
     }
 }

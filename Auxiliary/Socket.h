@@ -2,7 +2,7 @@
 
 #include <sys/socket.h>
 #include <netinet/tcp.h>
-
+#include <unistd.h>
 
 #include "noncopyable.h"
 #include "InetAddress.h"

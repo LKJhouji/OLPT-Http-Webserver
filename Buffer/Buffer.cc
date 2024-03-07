@@ -8,7 +8,7 @@ ssize_t Buffer::readFd(int fd, int* savedErrno) {
     char extrabuf[65536] = {0};
     struct iovec vec[2];
     const size_t writable = writableBytes();
-    vec[0].iov_base = &*buffer_.begin() + writerIndex_;
+    vec[0].iov_base = begin() + writerIndex_;
     vec[0].iov_len = writable;
     vec[1].iov_base = extrabuf;
     vec[1].iov_len = sizeof extrabuf;
@@ -28,15 +28,8 @@ ssize_t Buffer::readFd(int fd, int* savedErrno) {
 }
 
 //向fd中发送数据
-ssize_t Buffer::writeFd(int fd, int* savedErrno) {
-    char extrabuf[65536] = {0};
-    struct iovec vec[2];
+ssize_t Buffer::writeFd(int fd, int* savedErrno, struct iovec* vec, int iovcnt, string fileAddress, int bytesHaveSend, int bytesToSend) {
     const size_t readable = readableBytes();
-    vec[0].iov_base = &*buffer_.begin() + readerIndex_;
-    vec[0].iov_len = readable;
-    vec[1].iov_base = extrabuf;
-    vec[1].iov_len = sizeof extrabuf;
-    const int iovcnt = (readable <= sizeof extrabuf) ? 2 : 1;
     const int n = ::writev(fd, vec, iovcnt);
     if (n < 0) {
         *savedErrno = errno;
@@ -46,7 +39,22 @@ ssize_t Buffer::writeFd(int fd, int* savedErrno) {
     }
     else {
         readerIndex_ = buffer_.size();
-        append(extrabuf, n - readable); //将extrabuf中n - writable拷贝到入可写缓冲区中，虽然我不明白为什么这么做
+        vec[1].iov_base = &*fileAddress.begin() + (bytesHaveSend - readable);
+        vec[1].iov_len = bytesToSend;
     }
     return n;
+}
+
+bool Buffer::vappend(size_t maxLen, const char* format, ...) {
+    ensureWritableBytes(maxLen);
+    va_list arg_list;
+    va_start(arg_list, format);
+    int len = vsnprintf(beginWrite(), writableBytes(), format, arg_list);
+    if (len >= writableBytes())
+    {
+        va_end(arg_list);
+        return false;
+    }
+    writerIndex_ += len;
+    return true;
 }

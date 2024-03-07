@@ -32,7 +32,6 @@ public:
     void setReadCallback(const EventCallback& cb) { readCallback_ = cb; }
     void setWriteCallback(const EventCallback& cb) { writeCallback_ = cb; }
     void setErrorCallback(const EventCallback& cb) { errorCallback_ = cb; }
-    void setUpdateCallback(const EventCallback& cb) { updateCallback_ = cb; }
     void setCloseCallback(const EventCallback& cb) { closeCallback_ = cb; }
     void remove();
     void set_revents(int revents) { revents_ = revents; }

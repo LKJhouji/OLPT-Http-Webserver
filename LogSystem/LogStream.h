@@ -1,6 +1,7 @@
 #pragma once 
 #include <string.h>
 #include <iostream>
+#include <algorithm>
 #include "noncopyable.h"
 
 const int kSmallBuffer = 4000;      //Buffer的容量
@@ -10,17 +11,18 @@ template<int SIZE>
 class FixedBuffer : noncopyable {
 public:
     FixedBuffer() : cur_(data_) {};
-    ~FixedBuffer();
+    ~FixedBuffer() {};
 
     void append(const char* buf, size_t len) {
-        if (implicit_cast<size_t>(avail()) > len) {
+        if (static_cast<size_t>(avail()) > len) {
             memcpy(cur_, buf, len);
             cur_ += len;
         }
     }
+    
     void reset() { cur_ = data_; }
     int avail() const { return static_cast<int>(end() - cur_); }
-    void bzero() { memZero(data_, sizeof data_); }
+    void bzero() { memset(data_, 0, sizeof data_); }
     char* current() { return cur_; }
     const char* data() const { return data_; }
     int length() const { return static_cast<int>(cur_ - data_); }

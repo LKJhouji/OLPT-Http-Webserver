@@ -29,7 +29,7 @@ void Thread::start() {
     sem_init(&sem, false, 0);
 
     // 开启线程
-    thread_ = std::shared_ptr<std::thread>( MPool::newElement<std::thread>([&](){
+    thread_ = std::shared_ptr<std::thread>(new std::thread([&](){
         // 获取线程的tid值
         tid_ = CurrentThread::tid();
         sem_post(&sem);

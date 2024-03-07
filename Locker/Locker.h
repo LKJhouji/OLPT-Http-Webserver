@@ -5,19 +5,19 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-class sem {
+class Sem {
 public:
-    sem() {
+    Sem() {
         if (sem_init(&m_sem, 0, 0) != 0) {
             throw std::exception();
         }
     }
-    sem(int num) {
+    Sem(int num) {
         if (sem_init(&m_sem, 0, num) != 0) {
             throw std::exception();
         }
     }
-    ~sem() {
+    ~Sem() {
         sem_destroy(&m_sem);
     }
     bool wait() {
@@ -30,14 +30,14 @@ public:
 private:
     sem_t m_sem;
 };
-class locker {
+class Locker {
 public:
-    locker() {
+    Locker() {
         if (pthread_mutex_init(&m_mutex, NULL) != 0) {
             throw std::exception();
         }
     }
-    ~locker() {
+    ~Locker() {
         pthread_mutex_destroy(&m_mutex);
     }
     bool lock() {
@@ -53,15 +53,15 @@ public:
 private:
     pthread_mutex_t m_mutex;
 };
-class cond {
+class Cond {
 public:
-    cond() {
+    Cond() {
         if (pthread_cond_init(&m_cond, NULL) != 0) {
             //pthread_mutex_destroy(&m_mutex);
             throw std::exception();
         }
     }
-    ~cond() {
+    ~Cond() {
         pthread_cond_destroy(&m_cond);
     }
     bool wait(pthread_mutex_t *m_mutex) {

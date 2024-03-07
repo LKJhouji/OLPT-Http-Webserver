@@ -5,7 +5,6 @@
 #include "Timestamp.h"
 #define LOG Logger(__FILE__, __LINE__).stream()
 
-using namespace Apy_AsyncLogging;
 
 class Logger {
     using OutputFunc = std::function<void(const char* logline, int len)>;
@@ -23,11 +22,8 @@ public:
     std::string getLogFileName() { return logFileName_; }
     LogLevel logLevel() { return logLevel_; }
     void setLogLevel(LogLevel level) { logLevel_ = level; }
-    static void setOutput(OutputFunc output) { output_ = output; }
+    static void setOutput(OutputFunc output);
 private:
-    void asyncOutput(const char* logline, int len) {
-        asyncLog_.append(logline, len);
-    }
     class Impl {
     public:
         Impl(const char* fileName, int line);
@@ -39,6 +35,5 @@ private:
     Impl impl_;
     std::string logFileName_;
     static OutputFunc output_;
-    AsyncLogging asyncLog_;
     LogLevel logLevel_;
 };
